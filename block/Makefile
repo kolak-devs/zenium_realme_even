@@ -28,6 +28,11 @@ ssg-$(CONFIG_MQ_IOSCHED_SSG_CGROUP)	+= ssg-cgroup.o
 obj-$(CONFIG_MQ_IOSCHED_SSG)	+= ssg.o
 bfq-y				:= bfq-iosched.o bfq-wf2q.o bfq-cgroup.o
 obj-$(CONFIG_IOSCHED_BFQ)	+= bfq.o
+obj-$(CONFIG_IOSCHED_ZEN)       += zen-iosched.o
+obj-$(CONFIG_IOSCHED_MAPLE)	+= maple-iosched.o
+obj-$(CONFIG_IOSCHED_ANXIETY)	+= anxiety-iosched.o
+obj-$(CONFIG_IOSCHED_FIOPS)     += fiops-iosched.o
+obj-$(CONFIG_IOSCHED_SIO)       += sio-iosched.o
 
 obj-$(CONFIG_BLOCK_COMPAT)	+= compat_ioctl.o
 obj-$(CONFIG_BLK_CMDLINE_PARSER)	+= cmdline-parser.o
