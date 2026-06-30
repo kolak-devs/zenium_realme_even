@@ -517,8 +517,14 @@ static void tp_gesture_handle(struct touchpanel_data *ts)
         return;
     }
 #endif // end of CONFIG_OPLUS_TP_APK
+    if (gesture_info_temp.gesture_type == DouTap && CHK_BIT(ts->gesture_enable_indep, (1 << gesture_info_temp.gesture_type))) {
+        memcpy(&ts->gesture, &gesture_info_temp, sizeof(struct gesture_info));
 
-    if (gesture_info_temp.gesture_type != UnkownGesture && gesture_info_temp.gesture_type != FingerprintDown && gesture_info_temp.gesture_type != FingerprintUp && CHK_BIT(ts->gesture_enable_indep, (1 << gesture_info_temp.gesture_type))) {
+        input_report_key(ts->input_dev, KEY_WAKEUP, 1);
+        input_sync(ts->input_dev);
+        input_report_key(ts->input_dev, KEY_WAKEUP, 0);
+        input_sync(ts->input_dev);
+    } else if (gesture_info_temp.gesture_type != UnkownGesture && gesture_info_temp.gesture_type != FingerprintDown && gesture_info_temp.gesture_type != FingerprintUp && CHK_BIT(ts->gesture_enable_indep, (1 << gesture_info_temp.gesture_type))) {
         memcpy(&ts->gesture, &gesture_info_temp, sizeof(struct gesture_info));
 #if GESTURE_RATE_MODE
         if(ts->geature_ignore)
@@ -6527,7 +6533,7 @@ static int init_parse_dts(struct device *dev, struct touchpanel_data *ts)
     ts->wireless_charger_support = of_property_read_bool(np, "wireless_charger_support");
     ts->headset_pump_support    = of_property_read_bool(np, "headset_pump_support");
     ts->black_gesture_support   = of_property_read_bool(np, "black_gesture_support");
-    ts->black_gesture_indep_support   = of_property_read_bool(np, "black_gesture_indep_support");
+    ts->black_gesture_indep_support   = true;
     ts->single_tap_support      = of_property_read_bool(np, "single_tap_support");
     ts->gesture_test_support    = of_property_read_bool(np, "black_gesture_test_support");
     ts->fw_update_app_support   = of_property_read_bool(np, "fw_update_app_support");
@@ -7937,6 +7943,7 @@ static int tp_suspend(struct device *dev)
                 }
             }
             ts->ts_ops->mode_switch(ts->chip_data, MODE_GESTURE, true);
+            enable_irq_wake(ts->irq);
             goto EXIT;
         }
     }
@@ -8014,6 +8021,9 @@ static void tp_resume(struct device *dev)
     if(!ts->irq_trigger_hdl_support) {
         if (ts->int_mode == UNBANNABLE) {
             mutex_lock(&ts->mutex);
+        }
+        if (ts->black_gesture_support && (ts->gesture_enable & 0x01)) {
+            disable_irq_wake(ts->irq);
         }
         free_irq(ts->irq, ts);
         if (ts->int_mode == UNBANNABLE) {
